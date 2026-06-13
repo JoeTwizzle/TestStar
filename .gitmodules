@@ -1,3 +1,6 @@
 [submodule "lib/pico_hdmi"]
 	path = lib/pico_hdmi
 	url = https://github.com/JoeTwizzle/pico_hdmi.git
+[submodule "lib/bluepad32"]
+	path = lib/bluepad32
+	url = https://github.com/ricardoquesada/bluepad32.git
