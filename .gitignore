@@ -1,3 +1,5 @@
+build/
+
 # Prerequisites
 *.d
 
@@ -15,6 +17,7 @@
 *.so
 *.dylib
 *.dll
+*.elf
 
 # Fortran module files
 *.mod
@@ -25,8 +28,13 @@
 *.la
 *.a
 *.lib
+*.uf2
+*.dis
+*.map
+*.S
 
 # Executables
 *.exe
 *.out
 *.app
+
