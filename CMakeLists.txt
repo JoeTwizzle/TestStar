@@ -23,7 +23,7 @@ if (EXISTS ${picoVscode})
     include(${picoVscode})
 endif()
 # ====================================================================================
-set(PICO_BOARD pico2 CACHE STRING "Board type")
+set(PICO_BOARD pico2_w CACHE STRING "Board type")
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
@@ -33,9 +33,18 @@ project(TestStar C CXX ASM)
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
-# Add executable. Default name is the project name, version 0.1
+# Use runtime HDMI mode switching
+set(PICO_HDMI_RT_RUNTIME_MODE_ATTRS ON CACHE BOOL "" FORCE)
+set(PICO_HDMI_RUNTIME_MODES ON CACHE BOOL "" FORCE)
 
-add_executable(TestStar TestStar.c )
+add_subdirectory(lib/pico_hdmi)
+
+# Add executable. Default name is the project name, version 0.1
+add_executable(TestStar
+ main.c
+ audio.c
+ video.c
+)
 
 pico_set_program_name(TestStar "TestStar")
 pico_set_program_version(TestStar "0.1")
@@ -43,10 +52,25 @@ pico_set_program_version(TestStar "0.1")
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(TestStar 0)
 pico_enable_stdio_usb(TestStar 1)
+# Optional: build at 1280x720 @ 60 Hz (requires overclock to 372 MHz @ 1.3V).
+# Default is 640x480 @ 60 Hz at the stock 126 MHz clock.
+# Enable with: cmake -DBOUNCING_BOX_720P=ON ..
+option(TestStar_720P "Build TestStar in 1280x720 mode (requires overclock)" OFF)
+if (TestStar_720P)
+    target_compile_definitions(TestStar PRIVATE VIDEO_MODE_1280x720)
+    target_compile_definitions(pico_hdmi PRIVATE VIDEO_MODE_1280x720)
+endif()
 
 # Add the standard library to the build
 target_link_libraries(TestStar
-        pico_stdlib)
+    pico_stdlib
+    pico_multicore
+    hardware_clocks
+    hardware_dma
+    hardware_irq
+    hardware_i2c
+    pico_hdmi
+)
 
 # Add the standard include files to the build
 target_include_directories(TestStar PRIVATE
