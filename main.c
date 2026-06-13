@@ -1,8 +1,21 @@
+// WIFI + BT
+#include <btstack_run_loop.h>
+#include <pico/cyw43_arch.h>
+#include <pico/stdlib.h>
+#include <uni.h>
+
+#include "sdkconfig.h"
+
+#ifndef CONFIG_BLUEPAD32_PLATFORM_CUSTOM
+#error "Pico W must use BLUEPAD32_PLATFORM_CUSTOM"
+#endif
+
+// HDMI
 #include "pico_hdmi/hstx_data_island_queue.h"
 #include "pico_hdmi/hstx_packet.h"
-#include "audio.h"
-#include "video.h"
+#include "pico_hdmi/video_output_rt.h"
 
+//RP2350
 #include "pico/multicore.h"
 #include "pico/stdlib.h"
 
@@ -13,7 +26,9 @@
 #include <math.h>
 #include <string.h>
 
-#include "pico_hdmi/video_output_rt.h"
+#include "video.h"
+#include "audio.h"
+
 // ============================================================================
 // Configuration
 // ============================================================================
@@ -110,6 +125,28 @@ static void update_box(void)
     box_y = y;
 }
 
+struct uni_platform* get_my_platform(void);
+
+bool init_cyw43(void)
+{
+    // initialize CYW43 driver architecture (will enable BT if/because CYW43_ENABLE_BLUETOOTH == 1)
+    if (cyw43_arch_init())
+    {
+        return false;
+    }
+
+    // Must be called before uni_init()
+    uni_platform_set_custom(get_my_platform());
+
+    // Initialize BP32
+    uni_init(0, NULL);
+
+    //FIXME: Does not return.
+    btstack_run_loop_execute();
+
+    return true;
+}
+
 int main(void)
 {
 #ifdef VIDEO_MODE_1280x720
@@ -124,6 +161,15 @@ int main(void)
 #endif
     stdio_init_all();
     sleep_ms(1000);
+
+    if (!init_cyw43())
+    {
+        while (1)
+        {
+            logi("Failed to initialise cyw43_arch\n");
+            tight_loop_contents();
+        }
+    }
 
     // Initialize audio
     init_audio();

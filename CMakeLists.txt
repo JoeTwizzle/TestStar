@@ -25,6 +25,13 @@ endif()
 # ====================================================================================
 set(PICO_BOARD pico2_w CACHE STRING "Board type")
 
+# == Bluetooth ==
+# set bluepad32 root
+set(BLUEPAD32_ROOT ./lib/bluepad32)
+# Use BTstack from Pico SDK
+set(BTSTACK_ROOT ${PICO_SDK_PATH}/lib/btstack)
+# ===============
+
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
 
@@ -44,27 +51,36 @@ add_executable(TestStar
  main.c
  audio.c
  video.c
+ my_platform.c
+)
+
+# Add the standard include files to the build
+target_include_directories(TestStar PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}
+        ${BLUEPAD32_ROOT}/src/components/bluepad32/include
 )
 
 pico_set_program_name(TestStar "TestStar")
 pico_set_program_version(TestStar "0.1")
 
-# Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(TestStar 0)
-pico_enable_stdio_usb(TestStar 1)
-# Optional: build at 1280x720 @ 60 Hz (requires overclock to 372 MHz @ 1.3V).
-# Default is 640x480 @ 60 Hz at the stock 126 MHz clock.
-# Enable with: cmake -DBOUNCING_BOX_720P=ON ..
-option(TestStar_720P "Build TestStar in 1280x720 mode (requires overclock)" OFF)
-if (TestStar_720P)
-    target_compile_definitions(TestStar PRIVATE VIDEO_MODE_1280x720)
-    target_compile_definitions(pico_hdmi PRIVATE VIDEO_MODE_1280x720)
-endif()
+# Needed for btstack_config.h / sdkconfig.h
+# so that libbluepad32 can include them
+include_directories(TestStar ./)
+
+# Needed when using BTstack
+include_directories(${BTSTACK_ROOT}/3rd-party/bluedroid/encoder/include)
+include_directories(${BTSTACK_ROOT}/3rd-party/bluedroid/decoder/include)
+# Need for certain IDEs, like CLion. Otherwise it won't find btstack
+include_directories(${BTSTACK_ROOT}/src)
 
 # Add the standard library to the build
 target_link_libraries(TestStar
     pico_stdlib
     pico_multicore
+    pico_cyw43_arch_none
+    pico_btstack_classic
+    pico_btstack_cyw43
+    bluepad32
     hardware_clocks
     hardware_dma
     hardware_irq
@@ -72,10 +88,11 @@ target_link_libraries(TestStar
     pico_hdmi
 )
 
-# Add the standard include files to the build
-target_include_directories(TestStar PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}
-)
+add_subdirectory(${BLUEPAD32_ROOT}/src/components/bluepad32 libbluepad32)
+
+# Modify the below lines to enable/disable output over UART/USB
+pico_enable_stdio_uart(TestStar 0)
+pico_enable_stdio_usb(TestStar 1)
 
 pico_add_extra_outputs(TestStar)
 

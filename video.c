@@ -25,11 +25,11 @@ const video_mode_t video_mode_480_wide_cvt = {
 
 void init_video(void)
 {
-    i2c_init(i2c1, 100000);
-    gpio_set_function(20, GPIO_FUNC_I2C); // SDA
-    gpio_set_function(21, GPIO_FUNC_I2C); // SCL
-    gpio_pull_up(20);
-    gpio_pull_up(21);
+    // i2c_init(i2c1, 100000);
+    // gpio_set_function(20, GPIO_FUNC_I2C); // SDA
+    // gpio_set_function(21, GPIO_FUNC_I2C); // SCL
+    // gpio_pull_up(20);
+    // gpio_pull_up(21);
     hstx_di_queue_init();
     const video_mode_t *vm = &video_mode_480_wide_cvt;
     video_output_set_mode(vm);
